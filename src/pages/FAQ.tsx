@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 
 interface FAQItem {
   q: string
@@ -44,7 +44,7 @@ export function FAQ() {
       <h1 className="text-2xl font-bold text-gray-900 mb-2">常見問題</h1>
       <p className="text-sm text-gray-500 mb-6">關於飲食與慢性病管理的常見疑問</p>
 
-      {/* Filter */}
+      {/* Filter pills */}
       <div className="flex gap-2 flex-wrap mb-8">
         {TAGS.map((tag) => (
           <button
@@ -66,17 +66,23 @@ export function FAQ() {
               onClick={() => setOpenIndex(openIndex === i ? null : i)}
               className="w-full flex items-center justify-between px-5 py-4 text-left"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
                 <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-medium shrink-0">{item.tag}</span>
                 <span className="font-medium text-gray-900 text-sm">{item.q}</span>
               </div>
-              {openIndex === i ? <ChevronUp size={16} className="text-gray-400 shrink-0" /> : <ChevronDown size={16} className="text-gray-400 shrink-0" />}
+              <ChevronDown
+                size={16}
+                className={`text-gray-400 shrink-0 ml-2 transition-transform duration-300 ${openIndex === i ? 'rotate-180' : ''}`}
+              />
             </button>
-            {openIndex === i && (
+            {/* CSS max-height transition instead of conditional render */}
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${openIndex === i ? 'max-h-48' : 'max-h-0'}`}
+            >
               <div className="px-5 pb-4 text-sm text-gray-600 leading-relaxed border-t border-gray-50">
                 <p className="pt-3">{item.a}</p>
               </div>
-            )}
+            </div>
           </div>
         ))}
       </div>

@@ -84,9 +84,9 @@ export const CONDITION_LABELS: Record<Condition, { zh: string; en: string; color
 }
 
 export const RISK_LABELS: Record<RiskLevel, { zh: string; emoji: string; className: string }> = {
-  low: { zh: '低風險', emoji: '🟢', className: 'text-green-600 bg-green-50' },
-  medium: { zh: '中風險', emoji: '🟡', className: 'text-yellow-600 bg-yellow-50' },
-  high: { zh: '高風險', emoji: '🔴', className: 'text-red-600 bg-red-50' },
+  low: { zh: '低風險', emoji: '🟢', className: 'text-green-700 bg-green-50 ring-1 ring-green-200' },
+  medium: { zh: '中風險', emoji: '🟡', className: 'text-yellow-700 bg-yellow-50 ring-1 ring-yellow-200' },
+  high: { zh: '高風險', emoji: '🔴', className: 'text-red-700 bg-red-50 ring-1 ring-red-200' },
 }
 
 export const TAG_LABELS: Partial<Record<string, string>> = {

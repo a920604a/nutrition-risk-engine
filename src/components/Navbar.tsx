@@ -54,7 +54,7 @@ export function Navbar() {
                   onClick={() => handleNavClick(item.requiresAuth)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-indigo-50 text-indigo-600'
+                      ? 'bg-indigo-600 text-white'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
@@ -113,7 +113,7 @@ export function Navbar() {
                   onClick={() => handleNavClick(item.requiresAuth)}
                   className={`block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-indigo-50 text-indigo-600'
+                      ? 'bg-indigo-600 text-white'
                       : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >

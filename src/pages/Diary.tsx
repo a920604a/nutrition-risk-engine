@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { collection, query, orderBy, limit, getDocs, deleteDoc, doc, Timestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAppStore } from '../store/useAppStore'
+import { useToast } from '../components/Toast'
 import { Trash2, BookOpen } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -13,10 +14,30 @@ interface LogEntry {
 }
 
 const RISK_COLOR = (score: number) =>
-  score >= 4 ? 'text-red-600 bg-red-50' : score >= 2 ? 'text-yellow-600 bg-yellow-50' : 'text-green-600 bg-green-50'
+  score >= 4 ? 'text-red-700 bg-red-50 ring-1 ring-red-200' : score >= 2 ? 'text-yellow-700 bg-yellow-50 ring-1 ring-yellow-200' : 'text-green-700 bg-green-50 ring-1 ring-green-200'
+
+const RISK_BORDER = (score: number) =>
+  score >= 4 ? 'border-l-red-400' : score >= 2 ? 'border-l-yellow-400' : 'border-l-green-400'
+
+const BAR_COLOR = (score: number) =>
+  score >= 4 ? 'bg-red-400' : score >= 2 ? 'bg-yellow-400' : 'bg-green-400'
+
+// Get past 7 days labels
+function getPast7Days() {
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (6 - i))
+    return d
+  })
+}
+
+function getDateKey(date: Date) {
+  return date.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })
+}
 
 export function Diary() {
   const { user } = useAppStore()
+  const { addToast } = useToast()
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -35,10 +56,11 @@ export function Diary() {
 
   useEffect(() => { fetchLogs() }, [user])
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (log: LogEntry) => {
     if (!user) return
-    await deleteDoc(doc(db, 'users', user.uid, 'food_logs', id))
-    setLogs((prev) => prev.filter((l) => l.id !== id))
+    await deleteDoc(doc(db, 'users', user.uid, 'food_logs', log.id))
+    setLogs((prev) => prev.filter((l) => l.id !== log.id))
+    addToast(`已刪除「${log.food_name}」`, 'info')
   }
 
   if (!user) {
@@ -65,19 +87,35 @@ export function Diary() {
     grouped[date].push(log)
   }
 
-  // High risk count today
   const today = new Date().toLocaleDateString('zh-TW', { month: 'long', day: 'numeric', weekday: 'short' })
   const todayLogs = grouped[today] ?? []
   const todayHighRisk = todayLogs.filter((l) =>
     Math.max(l.risks.gout, l.risks.lipids, l.risks.diabetes, l.risks.hypertension) >= 4
   ).length
 
+  // Build 7-day chart data
+  const past7 = getPast7Days()
+  const chartData = past7.map((d) => {
+    const key = d.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric', weekday: 'short' })
+    const dayLogs = grouped[key] ?? []
+    const highCount = dayLogs.filter((l) =>
+      Math.max(l.risks.gout, l.risks.lipids, l.risks.diabetes, l.risks.hypertension) >= 4
+    ).length
+    return {
+      label: getDateKey(d),
+      total: dayLogs.length,
+      highCount,
+      isToday: getDateKey(d) === getDateKey(new Date()),
+    }
+  })
+  const maxTotal = Math.max(...chartData.map((d) => d.total), 1)
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">飲食日記</h1>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
           <p className="text-xs text-gray-500 mb-1">今日記錄</p>
           <p className="text-3xl font-bold text-gray-900">{todayLogs.length}</p>
@@ -90,8 +128,34 @@ export function Diary() {
         </div>
       </div>
 
+      {/* 7-day bar chart */}
+      {!loading && logs.length > 0 && (
+        <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm mb-8">
+          <p className="text-xs font-semibold text-gray-500 mb-4">近 7 天記錄量</p>
+          <div className="flex items-end gap-2 h-20">
+            {chartData.map((d) => (
+              <div key={d.label} className="flex-1 flex flex-col items-center gap-1">
+                <div className="w-full flex flex-col justify-end" style={{ height: '64px' }}>
+                  <div
+                    className={`w-full rounded-t transition-all ${d.highCount > 0 ? 'bg-red-300' : 'bg-indigo-300'} ${d.isToday ? 'opacity-100' : 'opacity-60'}`}
+                    style={{ height: `${Math.round((d.total / maxTotal) * 100)}%`, minHeight: d.total > 0 ? '4px' : '0' }}
+                  />
+                </div>
+                <span className={`text-[10px] ${d.isToday ? 'text-indigo-600 font-bold' : 'text-gray-400'}`}>
+                  {d.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {loading ? (
-        <div className="text-center py-12 text-gray-400">載入中...</div>
+        <div className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-100 px-4 py-3 animate-pulse h-14" />
+          ))}
+        </div>
       ) : logs.length === 0 ? (
         <div className="text-center py-16">
           <BookOpen size={48} className="text-gray-200 mx-auto mb-4" />
@@ -107,21 +171,19 @@ export function Diary() {
                 {entries.map((log) => {
                   const maxScore = Math.max(log.risks.gout, log.risks.lipids, log.risks.diabetes, log.risks.hypertension)
                   return (
-                    <div key={log.id} className="bg-white border border-gray-100 rounded-xl px-4 py-3 flex items-center justify-between shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">{log.food_name}</p>
-                          <p className="text-xs text-gray-400">
-                            {log.timestamp?.toDate().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
+                    <div key={log.id} className={`bg-white border border-gray-100 border-l-4 ${RISK_BORDER(maxScore)} rounded-xl px-4 py-3 flex items-center justify-between shadow-sm`}>
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">{log.food_name}</p>
+                        <p className="text-xs text-gray-400">
+                          {log.timestamp?.toDate().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${RISK_COLOR(maxScore)}`}>
                           {maxScore >= 4 ? '高風險' : maxScore >= 2 ? '中風險' : '低風險'}
                         </span>
                         <button
-                          onClick={() => handleDelete(log.id)}
+                          onClick={() => handleDelete(log)}
                           className="text-gray-300 hover:text-red-400 transition-colors"
                         >
                           <Trash2 size={15} />

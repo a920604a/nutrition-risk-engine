@@ -3,8 +3,9 @@ import { Heart, BookOpen } from 'lucide-react'
 import { RiskBadge } from './RiskBadge'
 import { evaluateAll, CONDITION_LABELS } from '../engine/riskEngine'
 import type { FoodItem } from '../lib/api'
-import type { Condition } from '../engine/riskEngine'
+import type { Condition, RiskLevel } from '../engine/riskEngine'
 import { useAppStore } from '../store/useAppStore'
+import { useToast } from './Toast'
 
 const CATEGORY_ICONS: Record<string, string> = {
   meat: '🥩',
@@ -17,6 +18,14 @@ const CATEGORY_ICONS: Record<string, string> = {
   other: '🍽️',
 }
 
+const RISK_BORDER: Record<RiskLevel, string> = {
+  high: 'border-l-red-400',
+  medium: 'border-l-yellow-400',
+  low: 'border-l-green-400',
+}
+
+const LEVEL_ORDER: Record<RiskLevel, number> = { high: 2, medium: 1, low: 0 }
+
 interface FoodCardProps {
   food: FoodItem
   onAddDiary?: (food: FoodItem) => void
@@ -26,6 +35,7 @@ interface FoodCardProps {
 
 export function FoodCard({ food, onAddDiary, onToggleFavorite, isFavorited = false }: FoodCardProps) {
   const { conditions, user, openLoginModal } = useAppStore()
+  const { addToast } = useToast()
   const [expanded, setExpanded] = useState(false)
 
   const allRisks = evaluateAll(food.tags as any, conditions)
@@ -35,9 +45,17 @@ export function FoodCard({ food, onAddDiary, onToggleFavorite, isFavorited = fal
 
   const icon = CATEGORY_ICONS[food.category] ?? '🍽️'
 
+  // Determine highest risk level among displayed conditions
+  const highestLevel: RiskLevel = displayConditions.reduce<RiskLevel>((best, c) => {
+    const lvl = allRisks[c].level
+    return LEVEL_ORDER[lvl] > LEVEL_ORDER[best] ? lvl : best
+  }, 'low')
+
   const handleFavorite = () => {
     if (!user) { openLoginModal(); return }
     onToggleFavorite?.(food)
+    if (!isFavorited) addToast(`已收藏 ${food.name_zh}`, 'success')
+    else addToast(`已取消收藏 ${food.name_zh}`, 'info')
   }
 
   const handleDiary = () => {
@@ -46,7 +64,7 @@ export function FoodCard({ food, onAddDiary, onToggleFavorite, isFavorited = fal
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-4">
+    <div className={`bg-white rounded-xl border border-gray-100 border-l-4 ${RISK_BORDER[highestLevel]} shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4`}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
