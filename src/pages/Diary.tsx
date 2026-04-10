@@ -19,8 +19,8 @@ const RISK_COLOR = (score: number) =>
 const RISK_BORDER = (score: number) =>
   score >= 4 ? 'border-l-red-400' : score >= 2 ? 'border-l-yellow-400' : 'border-l-green-400'
 
-const BAR_COLOR = (score: number) =>
-  score >= 4 ? 'bg-red-400' : score >= 2 ? 'bg-yellow-400' : 'bg-green-400'
+// const BAR_COLOR = (score: number) =>
+//   score >= 4 ? 'bg-red-400' : score >= 2 ? 'bg-yellow-400' : 'bg-green-400'
 
 // Get past 7 days labels
 function getPast7Days() {
