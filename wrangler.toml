@@ -9,8 +9,7 @@ database_id = "42b27e15-f705-421c-b06e-aab8b39311b5"
 
 [observability]
 [observability.logs]
-enabled = false
+enabled = true
 invocation_logs = true
 
 [observability.traces]
-enabled = false
