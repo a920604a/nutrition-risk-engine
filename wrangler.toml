@@ -1,4 +1,4 @@
-name = "nutrition-worker"
+name = "nutrition-risk-engine"
 main = "worker/index.ts"
 compatibility_date = "2024-01-01"
 
