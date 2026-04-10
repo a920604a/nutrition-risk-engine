@@ -41,50 +41,62 @@ async function buildFoodResponse(db: D1Database, foodRows: any[]) {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: CORS_HEADERS })
-    }
-
-    const url = new URL(request.url)
-    const path = url.pathname
-
-    // GET /api/foods/:id
-    const matchSingle = path.match(/^\/api\/foods\/([^/]+)$/)
-    if (matchSingle) {
-      const id = matchSingle[1]
-      const row = await env.DB.prepare('SELECT * FROM foods WHERE id = ?').bind(id).first()
-      if (!row) return json({ error: 'Not found' }, 404)
-      const foods = await buildFoodResponse(env.DB, [row])
-      return json(foods[0])
-    }
-
-    // GET /api/foods
-    if (path === '/api/foods') {
-      const q = url.searchParams.get('q') ?? ''
-      const category = url.searchParams.get('category') ?? ''
-
-      let query = 'SELECT * FROM foods WHERE 1=1'
-      const params: string[] = []
-
-      if (q) {
-        query += ' AND (name_zh LIKE ? OR name_en LIKE ?)'
-        params.push(`%${q}%`, `%${q}%`)
+    try {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, { headers: CORS_HEADERS })
       }
-      if (category) {
-        query += ' AND category = ?'
-        params.push(category)
+
+      const url = new URL(request.url)
+      const path = url.pathname
+
+      const matchSingle = path.match(/^\/api\/foods\/([^/]+)$/)
+      if (matchSingle) {
+        const id = matchSingle[1]
+        const row = await env.DB.prepare(
+          'SELECT * FROM foods WHERE id = ?'
+        ).bind(id).first()
+
+        if (!row) return json({ error: 'Not found' }, 404)
+
+        const foods = await buildFoodResponse(env.DB, [row])
+        return json(foods[0])
       }
-      query += ' LIMIT 50'
 
-      const stmt = env.DB.prepare(query)
-      const rows = params.length > 0
-        ? await stmt.bind(...params).all()
-        : await stmt.all()
+      if (path === '/api/foods') {
+        const q = url.searchParams.get('q') ?? ''
+        const category = url.searchParams.get('category') ?? ''
 
-      const foods = await buildFoodResponse(env.DB, rows.results as any[])
-      return json({ foods })
+        let query = 'SELECT * FROM foods WHERE 1=1'
+        const params: string[] = []
+
+        if (q) {
+          query += ' AND (name_zh LIKE ? OR name_en LIKE ?)'
+          params.push(`%${q}%`, `%${q}%`)
+        }
+
+        if (category) {
+          query += ' AND category = ?'
+          params.push(category)
+        }
+
+        query += ' LIMIT 50'
+
+        const stmt = env.DB.prepare(query)
+        const rows = params.length
+          ? await stmt.bind(...params).all()
+          : await stmt.all()
+
+        const foods = await buildFoodResponse(env.DB, rows.results as any[])
+        return json({ foods })
+      }
+
+      return json({ error: 'Not found' }, 404)
+
+    } catch (err: any) {
+      return json(
+        { error: 'Internal Error', detail: err?.message },
+        500
+      )
     }
-
-    return json({ error: 'Not found' }, 404)
-  },
+  }
 }
