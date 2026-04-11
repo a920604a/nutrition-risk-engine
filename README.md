@@ -150,7 +150,7 @@ CREATE TABLE foods (
 
 CREATE TABLE food_tags (
   food_id   TEXT NOT NULL REFERENCES foods(id),
-  condition TEXT NOT NULL,  -- gout | hyperlipidemia | diabetes | hypertension
+  condition TEXT NOT NULL,  -- 痛風 | 高血脂 | 糖尿病 | 高血壓
   tag       TEXT NOT NULL
 );
 

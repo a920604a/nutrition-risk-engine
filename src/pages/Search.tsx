@@ -95,10 +95,10 @@ export function Search() {
       food_name: food.name_zh,
       timestamp: serverTimestamp(),
       risks: {
-        gout: allRisks.gout.score,
-        lipids: allRisks.hyperlipidemia.score,
-        diabetes: allRisks.diabetes.score,
-        hypertension: allRisks.hypertension.score,
+        gout: allRisks['痛風'].score,
+        lipids: allRisks['高血脂'].score,
+        diabetes: allRisks['糖尿病'].score,
+        hypertension: allRisks['高血壓'].score,
       },
     })
     addToast(`已將「${food.name_zh}」加入飲食日記`, 'success')

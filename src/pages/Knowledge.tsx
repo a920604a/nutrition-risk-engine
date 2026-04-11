@@ -18,7 +18,7 @@ interface Article {
   created_at: any
 }
 
-const ALL_CONDITIONS: Condition[] = ['gout', 'hyperlipidemia', 'diabetes', 'hypertension']
+const ALL_CONDITIONS: Condition[] = ['痛風', '高血脂', '糖尿病', '高血壓']
 
 export function Knowledge() {
   const { user } = useAppStore()

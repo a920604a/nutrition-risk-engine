@@ -41,7 +41,7 @@ export function FoodCard({ food, onAddDiary, onToggleFavorite, isFavorited = fal
   const allRisks = evaluateAll(food.tags as any, conditions)
   const displayConditions: Condition[] = conditions.length > 0
     ? conditions
-    : ['gout', 'hyperlipidemia', 'diabetes', 'hypertension']
+    : ['痛風', '高血脂', '糖尿病', '高血壓']
 
   const icon = CATEGORY_ICONS[food.category] ?? '🍽️'
 

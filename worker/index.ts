@@ -26,7 +26,7 @@ async function buildFoodResponse(db: D1Database, foodRows: any[]) {
 
   const tagsMap: Record<string, Record<string, string[]>> = {}
   for (const row of tagRows.results as any[]) {
-    if (!tagsMap[row.food_id]) tagsMap[row.food_id] = { gout: [], hyperlipidemia: [], diabetes: [], hypertension: [] }
+    if (!tagsMap[row.food_id]) tagsMap[row.food_id] = { 痛風: [], 高血脂: [], 糖尿病: [], 高血壓: [] }
     if (!tagsMap[row.food_id][row.condition]) tagsMap[row.food_id][row.condition] = []
     tagsMap[row.food_id][row.condition].push(row.tag)
   }
@@ -36,7 +36,7 @@ async function buildFoodResponse(db: D1Database, foodRows: any[]) {
     name_zh: food.name_zh,
     name_en: food.name_en,
     category: food.category,
-    tags: tagsMap[food.id] ?? { gout: [], hyperlipidemia: [], diabetes: [], hypertension: [] },
+    tags: tagsMap[food.id] ?? { 痛風: [], 高血脂: [], 糖尿病: [], 高血壓: [] },
   }))
 }
 
@@ -108,14 +108,7 @@ export default {
           return json({ error: 'MISSING_CONDITIONS', message: '請先選擇您的疾病條件' }, 422)
         }
 
-        const CONDITION_ZH: Record<string, string> = {
-          gout: '痛風',
-          hyperlipidemia: '高血脂',
-          diabetes: '糖尿病',
-          hypertension: '高血壓',
-        }
-
-        const conditionLabels = body.conditions.map((c) => CONDITION_ZH[c] ?? c).join('、')
+        const conditionLabels = body.conditions.join('、')
 
         const highRiskFoods = body.foodLogs.filter((log) =>
           Math.max(log.risks.gout, log.risks.lipids, log.risks.diabetes, log.risks.hypertension) >= 4

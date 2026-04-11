@@ -18,7 +18,7 @@ interface FavoriteItem {
   risks?: Record<Condition, FoodRisk>
 }
 
-const CONDITIONS: Condition[] = ['gout', 'hyperlipidemia', 'diabetes', 'hypertension']
+const CONDITIONS: Condition[] = ['痛風', '高血脂', '糖尿病', '高血壓']
 
 export function Favorites() {
   const { user, conditions } = useAppStore()

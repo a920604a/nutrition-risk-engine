@@ -4,29 +4,29 @@ import { useAppStore } from '../store/useAppStore'
 import { CONDITION_LABELS } from '../engine/riskEngine'
 import type { Condition } from '../engine/riskEngine'
 
-const CONDITIONS: Condition[] = ['gout', 'hyperlipidemia', 'diabetes', 'hypertension']
+const CONDITIONS: Condition[] = ['痛風', '高血脂', '糖尿病', '高血壓']
 
 const CONDITION_EMOJIS: Record<Condition, string> = {
-  gout: '🦵',
-  hyperlipidemia: '🩸',
-  diabetes: '🍬',
-  hypertension: '💊',
+  痛風: '🦵',
+  高血脂: '🩸',
+  糖尿病: '🍬',
+  高血壓: '💊',
 }
 
 const CONDITION_COLORS: Record<Condition, { border: string; bg: string; text: string; selectedBorder: string; selectedBg: string; selectedText: string }> = {
-  gout: {
+  痛風: {
     border: 'border-yellow-200', bg: 'bg-yellow-50', text: 'text-yellow-700',
     selectedBorder: 'border-yellow-500', selectedBg: 'bg-yellow-50', selectedText: 'text-yellow-800',
   },
-  hyperlipidemia: {
+  高血脂: {
     border: 'border-red-200', bg: 'bg-red-50', text: 'text-red-700',
     selectedBorder: 'border-red-500', selectedBg: 'bg-red-50', selectedText: 'text-red-800',
   },
-  diabetes: {
+  糖尿病: {
     border: 'border-orange-200', bg: 'bg-orange-50', text: 'text-orange-700',
     selectedBorder: 'border-orange-500', selectedBg: 'bg-orange-50', selectedText: 'text-orange-800',
   },
-  hypertension: {
+  高血壓: {
     border: 'border-blue-200', bg: 'bg-blue-50', text: 'text-blue-700',
     selectedBorder: 'border-blue-500', selectedBg: 'bg-blue-50', selectedText: 'text-blue-800',
   },

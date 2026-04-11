@@ -1,4 +1,4 @@
-export type Condition = 'gout' | 'hyperlipidemia' | 'diabetes' | 'hypertension'
+export type Condition = '痛風' | '高血脂' | '糖尿病' | '高血壓'
 
 export type RiskLevel = 'low' | 'medium' | 'high'
 
@@ -9,15 +9,15 @@ export interface FoodRisk {
 }
 
 export interface FoodTags {
-  gout: string[]
-  hyperlipidemia: string[]
-  diabetes: string[]
-  hypertension: string[]
+  痛風: string[]
+  高血脂: string[]
+  糖尿病: string[]
+  高血壓: string[]
 }
 
 // Tag score weights per condition
 const TAG_SCORES: Record<Condition, Record<string, number>> = {
-  gout: {
+  痛風: {
     high_purine: 3,
     organ_meat: 3,
     alcohol: 3,
@@ -25,21 +25,21 @@ const TAG_SCORES: Record<Condition, Record<string, number>> = {
     moderate_purine: 1,
     low_purine: 0,
   },
-  hyperlipidemia: {
+  高血脂: {
     trans_fat: 3,
     high_saturated_fat: 3,
     high_cholesterol: 2,
     fried_food: 2,
     high_calorie: 1,
   },
-  diabetes: {
+  糖尿病: {
     high_sugar: 3,
     refined_carbs: 3,
     sweetened_drink: 3,
     high_glycemic_index: 2,
     low_glycemic_index: 0,
   },
-  hypertension: {
+  高血壓: {
     high_sodium: 3,
     processed_food: 2,
     canned_food: 2,
@@ -67,7 +67,7 @@ export function evaluate(tags: string[], condition: Condition): FoodRisk {
 
 export function evaluateAll(foodTags: FoodTags, _conditions?: Condition[]): Record<Condition, FoodRisk> {
   const result = {} as Record<Condition, FoodRisk>
-  const allConditions: Condition[] = ['gout', 'hyperlipidemia', 'diabetes', 'hypertension']
+  const allConditions: Condition[] = ['痛風', '高血脂', '糖尿病', '高血壓']
 
   for (const condition of allConditions) {
     result[condition] = evaluate(foodTags[condition] ?? [], condition)
@@ -77,10 +77,10 @@ export function evaluateAll(foodTags: FoodTags, _conditions?: Condition[]): Reco
 }
 
 export const CONDITION_LABELS: Record<Condition, { zh: string; en: string; color: string }> = {
-  gout: { zh: '痛風', en: 'Gout', color: 'yellow' },
-  hyperlipidemia: { zh: '高血脂', en: 'Hyperlipidemia', color: 'red' },
-  diabetes: { zh: '糖尿病', en: 'Diabetes', color: 'orange' },
-  hypertension: { zh: '高血壓', en: 'Hypertension', color: 'blue' },
+  痛風: { zh: '痛風', en: 'Gout', color: 'yellow' },
+  高血脂: { zh: '高血脂', en: 'Hyperlipidemia', color: 'red' },
+  糖尿病: { zh: '糖尿病', en: 'Diabetes', color: 'orange' },
+  高血壓: { zh: '高血壓', en: 'Hypertension', color: 'blue' },
 }
 
 export const RISK_LABELS: Record<RiskLevel, { zh: string; emoji: string; className: string }> = {

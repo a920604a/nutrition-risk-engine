@@ -5,19 +5,19 @@ import type { Condition } from '../engine/riskEngine'
 import { useAppStore } from '../store/useAppStore'
 import { Link } from 'react-router-dom'
 
-const ALL_CONDITIONS: Condition[] = ['gout', 'hyperlipidemia', 'diabetes', 'hypertension']
+const ALL_CONDITIONS: Condition[] = ['痛風', '高血脂', '糖尿病', '高血壓']
 
 // Per-condition tab accent colors
 const CONDITION_TAB: Record<Condition, { active: string; hover: string }> = {
-  gout: { active: 'bg-yellow-500 text-white', hover: 'hover:bg-yellow-50 hover:text-yellow-700' },
-  hyperlipidemia: { active: 'bg-red-500 text-white', hover: 'hover:bg-red-50 hover:text-red-700' },
-  diabetes: { active: 'bg-orange-500 text-white', hover: 'hover:bg-orange-50 hover:text-orange-700' },
-  hypertension: { active: 'bg-blue-500 text-white', hover: 'hover:bg-blue-50 hover:text-blue-700' },
+  痛風: { active: 'bg-yellow-500 text-white', hover: 'hover:bg-yellow-50 hover:text-yellow-700' },
+  高血脂: { active: 'bg-red-500 text-white', hover: 'hover:bg-red-50 hover:text-red-700' },
+  糖尿病: { active: 'bg-orange-500 text-white', hover: 'hover:bg-orange-50 hover:text-orange-700' },
+  高血壓: { active: 'bg-blue-500 text-white', hover: 'hover:bg-blue-50 hover:text-blue-700' },
 }
 
 export function Recommendations() {
   const { conditions } = useAppStore()
-  const [activeTab, setActiveTab] = useState<Condition>('gout')
+  const [activeTab, setActiveTab] = useState<Condition>('痛風')
   const [allFoods, setAllFoods] = useState<FoodItem[]>([])
   const [loading, setLoading] = useState(false)
 
