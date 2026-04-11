@@ -31,3 +31,28 @@ export async function getFoodById(id: string): Promise<FoodItem> {
   if (!res.ok) throw new Error('食物資料載入失敗')
   return res.json()
 }
+
+export interface AnalysisResult {
+  summary: string
+  recommendations: string[]
+  riskHighlights: string[]
+}
+
+export async function analyzeLog(payload: {
+  conditions: string[]
+  foodLogs: Array<{
+    food_name: string
+    risks: { gout: number; lipids: number; diabetes: number; hypertension: number }
+  }>
+}): Promise<AnalysisResult> {
+  const res = await fetch(`${WORKER_BASE}/api/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...payload, language: 'zh' }),
+  })
+  if (!res.ok) {
+    const err = await res.json() as { message?: string; error: string }
+    throw new Error(err.message ?? err.error ?? 'AI 分析失敗')
+  }
+  return res.json()
+}

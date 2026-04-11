@@ -3,8 +3,18 @@ import { collection, query, orderBy, limit, getDocs, deleteDoc, doc, Timestamp }
 import { db } from '../lib/firebase'
 import { useAppStore } from '../store/useAppStore'
 import { useToast } from '../components/Toast'
-import { Trash2, BookOpen } from 'lucide-react'
+import { useAnalysis } from '../hooks/useAnalysis'
+import { DiaryAnalysis } from '../components/DiaryAnalysis'
+import { CONDITION_LABELS } from '../engine/riskEngine'
+import type { Condition } from '../engine/riskEngine'
+import { Trash2, BookOpen, FileDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
+
+interface Article {
+  id: string
+  title: string
+  condition_tags: string[]
+}
 
 interface LogEntry {
   id: string
@@ -36,10 +46,13 @@ function getDateKey(date: Date) {
 }
 
 export function Diary() {
-  const { user } = useAppStore()
+  const { user, conditions } = useAppStore()
   const { addToast } = useToast()
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [articles, setArticles] = useState<Article[]>([])
+  const [pdfLoading, setPdfLoading] = useState(false)
+  const { result: analysisResult, loading: analysisLoading, error: analysisError, run: runAnalysis, canAnalyze } = useAnalysis()
 
   const fetchLogs = async () => {
     if (!user) return
@@ -56,11 +69,78 @@ export function Diary() {
 
   useEffect(() => { fetchLogs() }, [user])
 
+  useEffect(() => {
+    const q = query(collection(db, 'articles'), orderBy('created_at', 'desc'))
+    getDocs(q).then((snap) =>
+      setArticles(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Article)))
+    )
+  }, [])
+
   const handleDelete = async (log: LogEntry) => {
     if (!user) return
     await deleteDoc(doc(db, 'users', user.uid, 'food_logs', log.id))
     setLogs((prev) => prev.filter((l) => l.id !== log.id))
     addToast(`已刪除「${log.food_name}」`, 'info')
+  }
+
+  const handleAnalyze = () => {
+    const past7Start = new Date()
+    past7Start.setDate(past7Start.getDate() - 6)
+    past7Start.setHours(0, 0, 0, 0)
+    const recentLogs = logs.filter((l) => l.timestamp?.toDate() >= past7Start)
+    runAnalysis(recentLogs.map((l) => ({ food_name: l.food_name, risks: l.risks })), conditions)
+  }
+
+  const handleExportPDF = async () => {
+    const past7Start = new Date()
+    past7Start.setDate(past7Start.getDate() - 6)
+    past7Start.setHours(0, 0, 0, 0)
+    const recentLogs = logs.filter((l) => l.timestamp?.toDate() >= past7Start)
+    const logsForAI = recentLogs.map((l) => ({ food_name: l.food_name, risks: l.risks }))
+
+    const highRiskFreq: Record<string, number> = {}
+    for (const log of recentLogs) {
+      if (Math.max(log.risks.gout, log.risks.lipids, log.risks.diabetes, log.risks.hypertension) >= 4) {
+        highRiskFreq[log.food_name] = (highRiskFreq[log.food_name] ?? 0) + 1
+      }
+    }
+    const highRiskFoods = Object.entries(highRiskFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name, count]) => ({ name, count }))
+
+    const relatedArticles = articles.filter((a) =>
+      a.condition_tags?.some((tag) => conditions.includes(tag as Condition))
+    )
+
+    setPdfLoading(true)
+    try {
+      let result = analysisResult
+      if (!result) {
+        result = await runAnalysis(logsForAI, conditions)
+      }
+      if (!result) return
+
+      const now = new Date()
+      const start = new Date()
+      start.setDate(now.getDate() - 6)
+      const conditionLabels = conditions.map((c) => CONDITION_LABELS[c]?.zh ?? c)
+
+      const { downloadReport } = await import('../components/ReportPDF')
+      await downloadReport({
+        reportDate: now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' }),
+        dateRange: `${start.toLocaleDateString('zh-TW')} – ${now.toLocaleDateString('zh-TW')}`,
+        conditions: conditionLabels,
+        chartData,
+        highRiskFoods,
+        analysis: result,
+        relatedArticles,
+      })
+    } catch {
+      addToast('PDF 生成失敗，請稍後再試', 'error')
+    } finally {
+      setPdfLoading(false)
+    }
   }
 
   if (!user) {
@@ -110,9 +190,35 @@ export function Diary() {
   })
   const maxTotal = Math.max(...chartData.map((d) => d.total), 1)
 
+  // Derived data for AI analysis and PDF
+  const past7Start = new Date()
+  past7Start.setDate(past7Start.getDate() - 6)
+  past7Start.setHours(0, 0, 0, 0)
+  const recentLogs = logs.filter((l) => l.timestamp?.toDate() >= past7Start)
+
+  const relatedArticles = articles.filter((a) =>
+    a.condition_tags?.some((tag) => conditions.includes(tag as Condition))
+  )
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">飲食日記</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">飲食日記</h1>
+        {!loading && canAnalyze(recentLogs.length, conditions.length) && (
+          <button
+            onClick={handleExportPDF}
+            disabled={pdfLoading}
+            className="flex items-center gap-1.5 text-sm text-gray-600 border border-gray-200 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            {pdfLoading ? (
+              <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+            ) : (
+              <FileDown size={16} />
+            )}
+            匯出報告
+          </button>
+        )}
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 mb-6">
@@ -130,7 +236,7 @@ export function Diary() {
 
       {/* 7-day bar chart */}
       {!loading && logs.length > 0 && (
-        <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm mb-8">
+        <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm mb-6">
           <p className="text-xs font-semibold text-gray-500 mb-4">近 7 天記錄量</p>
           <div className="flex items-end gap-2 h-20">
             {chartData.map((d) => (
@@ -148,6 +254,19 @@ export function Diary() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* AI Analysis */}
+      {!loading && logs.length > 0 && (
+        <DiaryAnalysis
+          loading={analysisLoading}
+          error={analysisError}
+          result={analysisResult}
+          relatedArticles={relatedArticles}
+          conditions={conditions}
+          onAnalyze={handleAnalyze}
+          logCount={recentLogs.length}
+        />
       )}
 
       {loading ? (
