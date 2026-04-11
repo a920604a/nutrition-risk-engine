@@ -1,6 +1,7 @@
 export interface Env {
   DB: D1Database
   AI: Ai
+  KV: KVNamespace
 }
 
 const CORS_HEADERS = {
@@ -89,6 +90,34 @@ export default {
 
         const foods = await buildFoodResponse(env.DB, rows.results as any[])
         return json({ foods })
+      }
+
+      if (path === '/api/stats' && request.method === 'GET') {
+        const CACHE_KEY = 'stats:v1'
+        const TTL = 60 * 60 * 24 // 24 hours
+
+        // Try KV cache first
+        try {
+          const cached = await env.KV.get(CACHE_KEY)
+          if (cached) return json(JSON.parse(cached))
+        } catch { /* KV unavailable in local dev without --remote */ }
+
+        // Query D1
+        const [foodRow, conditionRow] = await Promise.all([
+          env.DB.prepare('SELECT COUNT(*) as count FROM foods').first<{ count: number }>(),
+          env.DB.prepare('SELECT COUNT(DISTINCT condition) as count FROM food_tags').first<{ count: number }>(),
+        ])
+        const stats = {
+          food_count: foodRow?.count ?? 0,
+          condition_count: conditionRow?.count ?? 4,
+        }
+
+        // Store in KV (best-effort)
+        try {
+          await env.KV.put(CACHE_KEY, JSON.stringify(stats), { expirationTtl: TTL })
+        } catch { /* ignore */ }
+
+        return json(stats)
       }
 
       if (path === '/api/analyze' && request.method === 'POST') {

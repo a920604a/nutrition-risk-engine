@@ -3,6 +3,13 @@ import { persist } from 'zustand/middleware'
 import type { User } from 'firebase/auth'
 import type { Condition } from '../engine/riskEngine'
 
+const CONDITION_MIGRATION: Record<string, Condition> = {
+  gout: '痛風',
+  hyperlipidemia: '高血脂',
+  diabetes: '糖尿病',
+  hypertension: '高血壓',
+}
+
 interface AppStore {
   // 疾病條件（持久化）
   conditions: Condition[]
@@ -44,6 +51,14 @@ export const useAppStore = create<AppStore>()(
     {
       name: 'nutrition-guard',
       partialize: (state) => ({ conditions: state.conditions }),
+      // Migrate old English condition values to Chinese
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.conditions = state.conditions.map(
+            (c) => CONDITION_MIGRATION[c as string] ?? c
+          )
+        }
+      },
     }
   )
 )

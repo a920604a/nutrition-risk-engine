@@ -26,6 +26,36 @@ export async function searchFoods(params: {
   return data.foods
 }
 
+export interface Stats {
+  food_count: number
+  condition_count: number
+}
+
+const STATS_CACHE_KEY = 'ng:stats'
+const STATS_CACHE_TTL = 60 * 60 * 24 * 1000 // 24h in ms
+
+export async function getStats(): Promise<Stats> {
+  // Check browser localStorage cache
+  try {
+    const raw = localStorage.getItem(STATS_CACHE_KEY)
+    if (raw) {
+      const { data, expiry } = JSON.parse(raw) as { data: Stats; expiry: number }
+      if (Date.now() < expiry) return data
+    }
+  } catch { /* ignore */ }
+
+  const res = await fetch(`${WORKER_BASE}/api/stats`)
+  if (!res.ok) throw new Error('統計資料載入失敗')
+  const data: Stats = await res.json()
+
+  // Store in localStorage with expiry
+  try {
+    localStorage.setItem(STATS_CACHE_KEY, JSON.stringify({ data, expiry: Date.now() + STATS_CACHE_TTL }))
+  } catch { /* ignore quota errors */ }
+
+  return data
+}
+
 export async function getFoodById(id: string): Promise<FoodItem> {
   const res = await fetch(`${WORKER_BASE}/api/foods/${id}`)
   if (!res.ok) throw new Error('食物資料載入失敗')

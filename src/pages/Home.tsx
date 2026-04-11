@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, BookOpen, Heart, ChevronRight, Utensils, Activity, Zap } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { CONDITION_LABELS } from '../engine/riskEngine'
 import type { Condition } from '../engine/riskEngine'
+import { getStats } from '../lib/api'
 
 const CONDITIONS: Condition[] = ['痛風', '高血脂', '糖尿病', '高血壓']
 
@@ -34,6 +36,11 @@ const CONDITION_COLORS: Record<Condition, { border: string; bg: string; text: st
 
 export function Home() {
   const { conditions, toggleCondition, user } = useAppStore()
+  const [stats, setStats] = useState<{ food_count: number; condition_count: number } | null>(null)
+
+  useEffect(() => {
+    getStats().then(setStats).catch(() => {})
+  }, [])
 
   return (
     <div className="min-h-screen pb-28">
@@ -53,12 +60,12 @@ export function Home() {
           <div className="flex items-center justify-center gap-8 text-sm text-indigo-200 mb-10">
             <div className="flex items-center gap-1.5">
               <Utensils size={15} />
-              <span>42 種食物</span>
+              <span>{stats ? `${stats.food_count} 種食物` : '…'}</span>
             </div>
             <div className="w-px h-4 bg-indigo-600" />
             <div className="flex items-center gap-1.5">
               <Activity size={15} />
-              <span>4 種疾病</span>
+              <span>{stats ? `${stats.condition_count} 種疾病` : '…'}</span>
             </div>
             <div className="w-px h-4 bg-indigo-600" />
             <div className="flex items-center gap-1.5">

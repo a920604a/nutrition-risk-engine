@@ -4,6 +4,13 @@ import { db } from '../lib/firebase'
 import { useAppStore } from '../store/useAppStore'
 import type { Condition } from '../engine/riskEngine'
 
+const CONDITION_MIGRATION: Record<string, Condition> = {
+  gout: '痛風',
+  hyperlipidemia: '高血脂',
+  diabetes: '糖尿病',
+  hypertension: '高血壓',
+}
+
 export function useConditionsSync() {
   const { user, conditions, setConditions } = useAppStore()
   const isSyncing = useRef(false)
@@ -22,7 +29,10 @@ export function useConditionsSync() {
         if (snap.exists()) {
           const data = snap.data()
           if (Array.isArray(data.conditions) && data.conditions.length > 0) {
-            setConditions(data.conditions as Condition[])
+            const migrated = data.conditions.map(
+              (c: string) => CONDITION_MIGRATION[c] ?? c
+            ) as Condition[]
+            setConditions(migrated)
           }
         }
       })

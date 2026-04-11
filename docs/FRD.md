@@ -62,9 +62,29 @@
 
 | 文件 | 狀態 |
 |------|------|
-| `README.md` | ✅ 完整覆寫 |
-| `docs/PRD.md` | ✅ 更新部署狀態 |
+| `README.md` | ✅ 完整覆寫（含部署步驟） |
+| `docs/PRD.md` | ✅ 更新 |
 | `docs/FRD.md` | ✅ 本文件 |
+
+### Phase 6 — AI 分析 + PDF 匯出 ✅
+
+| 功能 | 檔案 | 狀態 |
+|------|------|------|
+| Workers AI `/api/analyze` | `worker/index.ts` | ✅ |
+| AI 呼叫 + module-level 快取 | `src/hooks/useAnalysis.ts` | ✅ |
+| Diary inline AI 分析 UI | `src/components/DiaryAnalysis.tsx` | ✅ |
+| PDF 報告模板（SVG 圖表 + 中文字體）| `src/components/ReportPDF.tsx` | ✅ |
+| PDF 匯出按鈕（lazy loaded）| `src/pages/Diary.tsx` | ✅ |
+| NotoSansSC 中文字體 | `public/fonts/NotoSansSC-Regular.ttf` | ✅ |
+
+### Phase 7 — 資料庫擴充 + 架構優化 ✅
+
+| 功能 | 詳情 | 狀態 |
+|------|------|------|
+| 食物資料庫擴充 | 42 → 140 種食物，289 個標籤 | ✅ |
+| Condition 改為中文 key | `Condition` type 改 `'痛風'｜'高血脂'｜'糖尿病'｜'高血壓'` | ✅ |
+| localStorage / Firestore migration | `onRehydrateStorage` + `useConditionsSync` 自動轉換舊英文值 | ✅ |
+| Workers KV 快取 `/api/stats` | 食物數量 24h KV 快取，首頁動態顯示 | ✅ |
 
 ---
 
@@ -104,7 +124,9 @@ setFavorites(base + risks)             [疊加風險徽章]
 
 ## 已知限制
 
-- 食物資料庫固定 42 筆，新增需手動更新 D1 seed
+- 食物資料庫 140 筆，新增需手動更新 D1 seed 並重跑 `wrangler d1 execute`
 - Firestore 免費方案：每日讀取 50k 次、寫入 20k 次
 - Cloudflare D1 免費方案：每日 500k 次 row reads
-- Workers AI（Phase 2）：每日 10k neurons 免費額度
+- Cloudflare KV 免費方案：每日 100k 次讀取、1k 次寫入
+- Workers AI：每日 10k neurons 免費額度（`@cf/meta/llama-3.1-8b-instruct`）
+- KV stats 快取 TTL 24h，新增食物後需等待最多 24h 首頁才更新（或手動刪 KV key）

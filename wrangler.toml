@@ -10,6 +10,11 @@ database_id = "42b27e15-f705-421c-b06e-aab8b39311b5"
 [ai]
 binding = "AI"
 
+[[kv_namespaces]]
+binding = "KV"
+id = "91f9fd6cfce74bd0a2c5afe2c55b6b5f"
+preview_id = "91f9fd6cfce74bd0a2c5afe2c55b6b5f"
+
 [observability]
 [observability.logs]
 enabled = true

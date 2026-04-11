@@ -79,7 +79,7 @@ nutrition-risk-engine/
 │       ├── Favorites.tsx
 │       └── NotFound.tsx
 ├── worker/
-│   ├── index.ts                     # GET /api/foods, GET /api/foods/:id, POST /api/analyze
+│   ├── index.ts                     # GET /api/foods, GET /api/foods/:id, GET /api/stats, POST /api/analyze
 │   ├── schema.sql                   # D1 schema
 │   └── seed.sql                     # 140 種食物，~300 個標籤
 ├── docs/
